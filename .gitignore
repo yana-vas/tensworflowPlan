@@ -1,0 +1,7 @@
+data/
+checkpoints/
+venv/
+.conda/
+__pycache__/
+*.stl
+*.pt
