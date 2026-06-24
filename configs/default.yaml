@@ -1,0 +1,36 @@
+model:
+  encoder:
+    variant: dinov2_vits14   # embed_dim 384, patch 14 -> 257 tokens for 224px
+    freeze: true             # feature-extraction mode (transfer learning, notebook 05)
+    use_lora: false
+    lora_r: 16
+    lora_alpha: 16
+  decoder:
+    d_model: 384             # must match (or be projected from) encoder embed_dim
+    n_heads: 6               # 384 / 6 = 64 per head
+    n_layers: 4
+    num_bands: 10            # Fourier coord encoding -> 3 + 3*2*10 = 63 dims
+    dropout: 0.1
+    ffn_mult: 4
+
+training:
+  batch_size: 16
+  num_points: 2048
+  learning_rate: 0.0001
+  weight_decay: 0.01
+  num_epochs: 100
+  warmup_steps: 500
+  grad_clip: 1.0
+  amp: true
+  num_workers: 4
+  augment: true
+
+inference:
+  grid_resolution: 64
+  threshold: 0.5
+  query_batch_size: 100000
+
+data:
+  image_size: 224            # must be divisible by 14 (ViT patch size)
+  normalize_mean: [0.485, 0.456, 0.406]
+  normalize_std: [0.229, 0.224, 0.225]

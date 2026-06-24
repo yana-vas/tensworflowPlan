@@ -1,0 +1,6 @@
+model:
+  encoder:
+    variant: dinov2_vitb14   # embed_dim 768
+  decoder:
+    d_model: 768             # match the bigger token width
+    n_heads: 12              # 768 / 12 = 64 per head
