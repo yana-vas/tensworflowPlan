@@ -1,29 +1,20 @@
-# --- core deep learning ---
 torch>=2.2.0
 torchvision>=0.17.0
-numpy>=1.24,<2.0          # 1.x ABI for trimesh / scikit-image
-scipy>=1.10.0             # cKDTree for Chamfer / F-score / Normal Consistency
+numpy>=1.24,<2.0
+scipy>=1.10.0
 
-# --- DINOv2 encoder (loaded via torch.hub; no extra package needed) ---
-# Optional alternatives / extras:
-einops>=0.7.0             # optional: cleaner tensor reshapes
-# transformers>=4.40.0    # optional: HuggingFace DINOv2 loader instead of torch.hub
-# timm>=0.9.16            # optional: extra ViT utilities
-# peft>=0.10.0            # optional: LoRA fine-tuning of the backbone
 
-# --- mesh / 3D ---
-scikit-image>=0.21.0      # marching_cubes
+einops>=0.7.0
+
+scikit-image>=0.21.0 
 trimesh>=4.0.0
-rtree>=1.0.0              # trimesh.contains / proximity backend
+rtree>=1.0.0
 
-# --- data / image ---
 Pillow>=9.5.0
 PyYAML>=6.0
 
-# --- training / logging ---
 tqdm>=4.65.0
 tensorboard>=2.15.0
 matplotlib>=3.7.0
 
-# --- tests ---
 pytest>=7.3.0
