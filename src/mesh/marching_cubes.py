@@ -1,4 +1,3 @@
-"""Marching Cubes: probability grid -> triangle mesh, with edge-closing padding."""
 
 from typing import Optional, Tuple
 
@@ -8,13 +7,9 @@ from skimage import measure
 
 
 class MarchingCubesExtractor:
-    """Extract an iso-surface mesh from an occupancy probability grid."""
 
     def __init__(self, threshold: float = 0.5, pad: bool = True) -> None:
-        """Args:
-        threshold: Iso-level (probability) defining the surface.
-        pad: Zero-pad the grid by 1 voxel so edge-touching surfaces close.
-        """
+        
         self.threshold = threshold
         self.pad = pad
 
@@ -24,16 +19,7 @@ class MarchingCubesExtractor:
         bounds: Tuple[float, float] = (-1.0, 1.0),
         postprocess: bool = True,
     ) -> Optional[trimesh.Trimesh]:
-        """Run Marching Cubes and map vertices into world bounds.
-
-        Args:
-            occupancy_grid: ``(R, R, R)`` probabilities in [0, 1].
-            bounds: (low, high) world coordinate range the grid spans.
-            postprocess: If True, run ``make_printable`` on the result.
-
-        Returns:
-            A ``trimesh.Trimesh`` or None if no surface crosses the threshold.
-        """
+        
         grid = occupancy_grid
         if self.pad:
             grid = np.pad(grid, pad_width=1, mode="constant", constant_values=0.0)
@@ -48,12 +34,10 @@ class MarchingCubesExtractor:
             print(f"Marching cubes failed: {exc}")
             return None
 
-        # Map voxel indices -> [0,1] -> world bounds. Account for the padding
-        # offset so geometry stays aligned with the original [-1,1] frame.
         res = grid.shape[0]
         if self.pad:
-            verts = verts - 1.0   # undo the 1-voxel pad shift
-            res = res - 2         # original resolution
+            verts = verts - 1.0 
+            res = res - 2 # original resolution
         verts = verts / max(res - 1, 1)
         verts = verts * (bounds[1] - bounds[0]) + bounds[0]
 
@@ -61,7 +45,6 @@ class MarchingCubesExtractor:
         mesh.fix_normals()
 
         if postprocess:
-            # Преместен импорт тук, за да се избегне циклична зависимост (circular import)
             from src.mesh.postprocess import make_printable
             mesh = make_printable(mesh)
         return mesh
@@ -74,14 +57,12 @@ def extract_mesh(
     pad: bool = True,
     postprocess: bool = True,
 ) -> Optional[trimesh.Trimesh]:
-    """Convenience wrapper around ``MarchingCubesExtractor``."""
     return MarchingCubesExtractor(threshold=threshold, pad=pad).extract(
         occupancy_grid, bounds=bounds, postprocess=postprocess
     )
 
 
 if __name__ == "__main__":
-    # A solid sphere occupancy field reaching the grid edge: padding must close it.
     R = 48
     ax = np.linspace(-1, 1, R)
     gx, gy, gz = np.meshgrid(ax, ax, ax, indexing="ij")

@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader, Dataset
 
 from src.data.preprocessing import ImagePreprocessor
 
-# The 13 ShapeNet categories named in the project goal (id -> human name).
+# id : name
 CATEGORIES = {
     "02691156": "airplane",
     "02828884": "bench",
@@ -25,13 +25,11 @@ CATEGORIES = {
     "04530566": "vessel",
 }
 
-# OccNet points are stored in [-0.5, 0.5]; we train/infer in [-1, 1].
+# occupancy network points are [-0.5, 0.5], but we train/infer in [-1, 1]
 _POINT_SCALE = 2.0
 
 
 class ShapeNetDataset(Dataset):
-    """ShapeNet image + occupancy dataset with optional surface/camera outputs."""
-
     def __init__(
         self,
         root: str,
@@ -45,18 +43,6 @@ class ShapeNetDataset(Dataset):
         eval_points: int = 100000,
         load_camera: bool = False,
     ) -> None:
-        """Args:
-        root: Dataset root containing one subdir per category id.
-        split: 'train' | 'val' | 'test'.
-        categories: Category ids to include (default: all 13).
-        num_points: Volume points sampled per item for training.
-        image_size: Image side length (passed to ImagePreprocessor).
-        augment: Apply training image augmentation.
-        max_samples: Cap total samples (debugging / smoke tests).
-        return_eval: Also return surface points+normals from pointcloud.npz.
-        eval_points: Surface points to sample when return_eval is True.
-        load_camera: Also return camera intrinsics/extrinsics for the chosen view.
-        """
         self.root = Path(root)
         self.split = split
         self.categories = categories or list(CATEGORIES.keys())
@@ -71,7 +57,6 @@ class ShapeNetDataset(Dataset):
               f"{len(set(s['category'] for s in self.samples))} categories")
 
     def _find_samples(self, max_samples: Optional[int]) -> List[Dict[str, str]]:
-        """Scan the root and apply the deterministic 80/10/10 per-category split."""
         samples: List[Dict[str, str]] = []
         for cat_id in sorted(self.categories):
             cat_dir = self.root / cat_id
@@ -105,7 +90,6 @@ class ShapeNetDataset(Dataset):
         return len(self.samples)
 
     def _load_image(self, model_dir: Path) -> Tuple[Image.Image, int]:
-        """Load one random rendered view; return (image, view_index)."""
         img_dir = model_dir / "img_choy2016"
         if img_dir.exists():
             views = sorted(img_dir.glob("*.jpg")) + sorted(img_dir.glob("*.png"))
@@ -115,7 +99,6 @@ class ShapeNetDataset(Dataset):
         return Image.new("RGB", (224, 224), "white"), 0
 
     def _load_points(self, model_dir: Path) -> Tuple[np.ndarray, np.ndarray]:
-        """Load and subsample volume points + binary occupancy, scaled to [-1, 1]."""
         data = np.load(str(model_dir / "points.npz"))
         points = data["points"].astype(np.float32) * _POINT_SCALE
         occ = np.unpackbits(data["occupancies"])[: points.shape[0]].astype(np.float32)
@@ -124,7 +107,6 @@ class ShapeNetDataset(Dataset):
         return points[choice], occ[choice]
 
     def _load_pointcloud(self, model_dir: Path) -> Tuple[np.ndarray, np.ndarray]:
-        """Load surface points + normals (for evaluation), scaled to [-1, 1]."""
         pc_path = model_dir / "pointcloud.npz"
         if not pc_path.exists():
             empty = np.zeros((0, 3), dtype=np.float32)
@@ -138,7 +120,6 @@ class ShapeNetDataset(Dataset):
         return pts[choice], normals[choice]
 
     def _load_camera(self, model_dir: Path, view_idx: int) -> Dict[str, np.ndarray]:
-        """Load camera world matrix + intrinsics for a view; empty dict if absent."""
         cam_path = model_dir / "img_choy2016" / "cameras.npz"
         if not cam_path.exists():
             return {}
@@ -149,7 +130,6 @@ class ShapeNetDataset(Dataset):
         }
 
     def __getitem__(self, idx: int) -> Dict[str, object]:
-        """Return one sample dict (see module docstring for keys)."""
         info = self.samples[idx]
         model_dir = Path(info["dir"])
 
@@ -182,11 +162,6 @@ def get_dataloader(
     num_workers: int = 4,
     **kwargs: object,
 ) -> DataLoader:
-    """Build a DataLoader over ShapeNetDataset.
-
-    Shuffles + drops the last partial batch only for training. ``**kwargs`` are
-    forwarded to ``ShapeNetDataset`` (num_points, augment, return_eval, ...).
-    """
     dataset = ShapeNetDataset(root=root, split=split, **kwargs)
     return DataLoader(
         dataset,
