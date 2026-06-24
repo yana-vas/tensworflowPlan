@@ -1,5 +1,3 @@
-"""Evaluation package: reconstruction quality metrics."""
-
 from src.eval.metrics import (
     volumetric_iou,
     chamfer_l1,

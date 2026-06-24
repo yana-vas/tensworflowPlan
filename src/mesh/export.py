@@ -1,4 +1,3 @@
-"""Export trimesh meshes to STL/OBJ/PLY. STL is the 3D-printing target."""
 
 from pathlib import Path
 from typing import Optional
